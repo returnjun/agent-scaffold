@@ -1,6 +1,9 @@
 package daoha.top.domain.agent.service.armory.factory;
 
+import com.google.adk.agents.BaseAgent;
 import com.google.adk.agents.LlmAgent;
+import com.google.adk.agents.SequentialAgent;
+import com.google.adk.runner.InMemoryRunner;
 import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,10 +15,7 @@ import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.expression.spel.ast.OpNE;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @ClassName : DefaultArmoryFactory
@@ -36,8 +36,11 @@ public class DefaultArmoryFactory {
 
         private OpenAiApi openAiApi;
         private ChatModel chatModel;
-        private Map<String,LlmAgent> agentMap;
+        private SequentialAgent sequentialAgent;
+
+        private Map<String,BaseAgent> agentMap;
         private List<AiAgentConfigTableVO.Module.AgentWorkflow> agentWorkflows = new ArrayList<>();
+
 
         private Map<String,Object> dataObjects = new HashMap<>();
 
@@ -47,6 +50,22 @@ public class DefaultArmoryFactory {
 
         public <T> T getValue(String key){
             return (T) dataObjects.get(key);
+        }
+
+        public List<BaseAgent> queryAgentList(List<String> agentNames){
+            if (agentNames == null || agentNames.isEmpty() || agentMap == null) {
+                return Collections.emptyList();
+            }
+
+            List<BaseAgent> agents = new ArrayList<>();
+            for (String name : agentNames) {
+                BaseAgent agent = agentMap.get(name);
+                if (agent!=null){
+                    agents.add(agent);
+                }
+            }
+
+            return agents;
         }
     }
 }

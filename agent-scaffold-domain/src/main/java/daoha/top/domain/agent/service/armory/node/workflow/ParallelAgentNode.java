@@ -1,6 +1,8 @@
 package daoha.top.domain.agent.service.armory.node.workflow;
 
 import cn.bugstack.wrench.design.framework.tree.StrategyHandler;
+import com.google.adk.agents.BaseAgent;
+import com.google.adk.agents.ParallelAgent;
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
 import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
@@ -24,7 +26,24 @@ import java.util.List;
 public class ParallelAgentNode extends AbstractArmorySupport {
     @Override
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
-        return null;
+        log.info("agent装配的parallel并行的装配");
+
+        List<AiAgentConfigTableVO.Module.AgentWorkflow> agentWorkflows = dynamicContext.getAgentWorkflows();
+        AiAgentConfigTableVO.Module.AgentWorkflow agentWorkflow = agentWorkflows.remove(0);
+
+        List<String> subAgentnames = agentWorkflow.getSubAgents();
+        List<BaseAgent> baseAgents = dynamicContext.queryAgentList(subAgentnames);
+
+        ParallelAgent parallelAgent =
+                ParallelAgent.builder()
+                        .name(agentWorkflow.getName())
+                        .subAgents(baseAgents)
+                        .description(agentWorkflow.getDescription())
+                        .build();
+
+        dynamicContext.getAgentMap().put(agentWorkflow.getName(),parallelAgent);
+//        registerBean(agentWorkflow.getName(),ParallelAgent.class,parallelAgent);
+        return router(armoryCommandEntity, dynamicContext);
     }
 
     @Override
@@ -44,7 +63,6 @@ public class ParallelAgentNode extends AbstractArmorySupport {
 
         return switch (node){
             case "loop" -> getBean("loopAgentNode");
-            case "parallel" -> getBean("parallelAgentNode");
             case "sequential" -> getBean("sequentialAgentNode");
             default -> defaultStrategyHandler;
         };
