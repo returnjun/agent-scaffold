@@ -5,10 +5,7 @@ target/
 .kotlin
 
 ### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -37,3 +34,12 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Local agent configuration containing API credentials
+/agent-scaffold-app/src/main/resources/agent/test-agent.yml
+
+# Runtime logs may contain credentials and local configuration
+/data/log/
+
+# Keep all test sources and test resources local
+**/src/test/

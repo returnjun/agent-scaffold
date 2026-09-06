@@ -1,4 +1,7 @@
 spring:
+  # 当前项目不使用数据库，避免 MyBatis 间接触发数据源自动配置
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
   config:
     name: agent-scaffold-app
   profiles:
