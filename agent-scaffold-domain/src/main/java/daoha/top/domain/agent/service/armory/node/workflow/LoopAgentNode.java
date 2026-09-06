@@ -1,6 +1,7 @@
 package daoha.top.domain.agent.service.armory.node.workflow;
 
 import cn.bugstack.wrench.design.framework.tree.StrategyHandler;
+import com.google.adk.agents.LoopAgent;
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
 import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
@@ -26,7 +27,26 @@ public class LoopAgentNode extends AbstractArmorySupport {
 
     @Override
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
-        return null;
+        log.info("agent装配的loopagentnode装配");
+
+        List<AiAgentConfigTableVO.Module.AgentWorkflow> agentWorkflows = dynamicContext.getAgentWorkflows();
+        AiAgentConfigTableVO.Module.AgentWorkflow agentWorkflow = agentWorkflows.remove(0);
+
+        List<String> subAgents = agentWorkflow.getSubAgents();
+
+        LoopAgent loopAgent =
+                LoopAgent.builder()
+                        .name(agentWorkflow.getName())
+                        .description(agentWorkflow.getDescription())
+                        .subAgents(dynamicContext.queryAgentList(subAgents))
+                        .maxIterations(agentWorkflow.getMaxIterations())
+                        .build();
+
+        dynamicContext.getAgentMap().put(agentWorkflow.getName(),loopAgent);
+
+//        registerBean(agentWorkflow.getName(),LoopAgent.class,loopAgent);
+
+        return router(armoryCommandEntity, dynamicContext);
     }
 
     @Override
