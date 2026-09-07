@@ -108,7 +108,6 @@ public class AiAgentConfigTableVO {
                 @Data
                 public static class LocalParameters {
                     private String name;
-
                 }
 
             }
@@ -139,6 +138,7 @@ public class AiAgentConfigTableVO {
         @Data
         public static class Runner {
             private String agentName;
+            private List<String> pluginNameList;
         }
     }
 

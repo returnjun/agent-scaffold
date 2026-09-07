@@ -1,7 +1,7 @@
-package daoha.top.domain.agent.service.armory.mcp.client.impl;
+package daoha.top.domain.agent.service.armory.matter.mcp.client.impl;
 
 import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
-import daoha.top.domain.agent.service.armory.mcp.client.TooMcpCreateService;
+import daoha.top.domain.agent.service.armory.matter.mcp.client.TooMcpCreateService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.ToolCallback;
