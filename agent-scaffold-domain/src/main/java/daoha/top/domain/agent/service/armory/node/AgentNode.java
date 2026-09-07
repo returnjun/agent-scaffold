@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -25,6 +26,8 @@ import java.util.List;
 @Service
 public class AgentNode extends AbstractArmorySupport {
 
+    @Resource
+    private AgentWorkFlowNode agentWorkFlowNode;
 
     @Override
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
@@ -32,6 +35,8 @@ public class AgentNode extends AbstractArmorySupport {
 
         ChatModel chatModel = dynamicContext.getChatModel();
         AiAgentConfigTableVO aiAgentConfigTableVO = armoryCommandEntity.getAiAgentConfigTableVO();
+
+
         List<AiAgentConfigTableVO.Module.Agent> agents = aiAgentConfigTableVO.getModule().getAgents();
 
         for(AiAgentConfigTableVO.Module.Agent agent : agents){
@@ -52,6 +57,8 @@ public class AgentNode extends AbstractArmorySupport {
 
     @Override
     public StrategyHandler<ArmoryCommandEntity, DefaultArmoryFactory.DynamicContext, AiAgentRegisterVO> get(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
-        return defaultStrategyHandler;
+
+
+        return agentWorkFlowNode;
     }
 }

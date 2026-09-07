@@ -9,7 +9,11 @@ import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
 import daoha.top.domain.agent.service.armory.AbstractArmorySupport;
 import daoha.top.domain.agent.service.armory.factory.DefaultArmoryFactory;
+import daoha.top.types.enums.ResponseCode;
+import daoha.top.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -36,10 +40,7 @@ public class RunnerNode extends AbstractArmorySupport {
         String agentDesc = agent.getAgentDesc();
         String agentName = agent.getAgentName();
 
-        //获取最后的执行agent
-        SequentialAgent sequentialAgent = dynamicContext.getSequentialAgent();
-
-        InMemoryRunner runner = new InMemoryRunner(sequentialAgent, appName);
+        InMemoryRunner runner = getRunner(dynamicContext, aiAgentConfigTableVO, appName);
 
         AiAgentRegisterVO aiAgentRegisterVO = AiAgentRegisterVO.builder()
                 .appName(appName)
@@ -52,6 +53,21 @@ public class RunnerNode extends AbstractArmorySupport {
         registerBean(agentId,AiAgentRegisterVO.class,aiAgentRegisterVO);
 
         return aiAgentRegisterVO;
+    }
+
+    @NotNull
+    private static InMemoryRunner getRunner(DefaultArmoryFactory.DynamicContext dynamicContext, AiAgentConfigTableVO aiAgentConfigTableVO, String appName) {
+        AiAgentConfigTableVO.Module.Runner runnerConfig = aiAgentConfigTableVO.getModule().getRunner();
+
+        String agentName = runnerConfig.getAgentName();
+        if (StringUtils.isBlank(agentName)) {
+            log.error("runner.agentName is null");
+            throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), ResponseCode.ILLEGAL_PARAMETER.getInfo());
+        }
+
+        BaseAgent baseAgent = dynamicContext.getAgentMap().get(agentName);
+
+        return new InMemoryRunner(baseAgent, appName);
     }
 
     @Override
