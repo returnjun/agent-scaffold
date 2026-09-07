@@ -1,10 +1,14 @@
 package daoha.top.domain.agent.service.armory.factory;
 
+import cn.bugstack.wrench.design.framework.tree.StrategyHandler;
 import com.google.adk.agents.BaseAgent;
 import com.google.adk.agents.LlmAgent;
 import com.google.adk.agents.SequentialAgent;
 import com.google.adk.runner.InMemoryRunner;
+import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
 import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
+import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
+import daoha.top.domain.agent.service.armory.node.RootNode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +19,9 @@ import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.expression.spel.ast.OpNE;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @ClassName : DefaultArmoryFactory
@@ -28,6 +34,13 @@ import java.util.*;
 @Service
 public class DefaultArmoryFactory {
 
+    @Resource
+    private RootNode rootNode;
+
+    public StrategyHandler<ArmoryCommandEntity, DynamicContext, AiAgentRegisterVO> armoryStrategyHandler() {
+        return rootNode;
+    }
+
     @Data
     @Builder
     @NoArgsConstructor
@@ -36,11 +49,11 @@ public class DefaultArmoryFactory {
 
         private OpenAiApi openAiApi;
         private ChatModel chatModel;
-        private SequentialAgent sequentialAgent;
 
-        private Map<String,BaseAgent> agentMap;
-        private List<AiAgentConfigTableVO.Module.AgentWorkflow> agentWorkflows = new ArrayList<>();
+        private Map<String,BaseAgent> agentMap = new HashMap<>();
 
+        private AtomicInteger currentStepIndex = new AtomicInteger(0);
+        private AiAgentConfigTableVO.Module.AgentWorkflow currentAgentWorkflow;
 
         private Map<String,Object> dataObjects = new HashMap<>();
 
@@ -66,6 +79,14 @@ public class DefaultArmoryFactory {
             }
 
             return agents;
+        }
+
+        public void addcurrentStepIndex(){
+            currentStepIndex.incrementAndGet();
+        }
+
+        public int getCurrentStepIndex(){
+            return currentStepIndex.get();
         }
     }
 }
