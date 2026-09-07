@@ -1,10 +1,10 @@
-package daoha.top.domain.agent.service.armory.mcp.client.factory;
+package daoha.top.domain.agent.service.armory.matter.mcp.client.factory;
 
 import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
-import daoha.top.domain.agent.service.armory.mcp.client.TooMcpCreateService;
-import daoha.top.domain.agent.service.armory.mcp.client.impl.LocalToolMcpCreateService;
-import daoha.top.domain.agent.service.armory.mcp.client.impl.SSEToolMcpCreateService;
-import daoha.top.domain.agent.service.armory.mcp.client.impl.StdioToolMcpCreateService;
+import daoha.top.domain.agent.service.armory.matter.mcp.client.TooMcpCreateService;
+import daoha.top.domain.agent.service.armory.matter.mcp.client.impl.LocalToolMcpCreateService;
+import daoha.top.domain.agent.service.armory.matter.mcp.client.impl.SSEToolMcpCreateService;
+import daoha.top.domain.agent.service.armory.matter.mcp.client.impl.StdioToolMcpCreateService;
 import daoha.top.types.enums.ResponseCode;
 import daoha.top.types.exception.AppException;
 import jakarta.annotation.Resource;
