@@ -64,8 +64,9 @@ public class ChatService implements IChatService {
         String appName = aiAgentRegisterVO.getAppName();
         InMemoryRunner runner = aiAgentRegisterVO.getRunner();
 
-        return userSessions.computeIfAbsent(userId, uid -> {
-            Session session = runner.sessionService().createSession(appName, uid)
+        String sessionKey  = buildSessionKey(agentId, userId);
+        return userSessions.computeIfAbsent(sessionKey , key -> {
+            Session session = runner.sessionService().createSession(appName, userId)
                     .blockingGet();
             return session.id();
         });
@@ -148,5 +149,8 @@ public class ChatService implements IChatService {
         events.blockingForEach(event -> outputs.add(event.stringifyContent()));
 
         return outputs;
+    }
+    private String buildSessionKey(String agentId, String userId) {
+        return agentId + ":" + userId;
     }
 }
