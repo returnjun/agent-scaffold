@@ -2,9 +2,6 @@ package daoha.top.domain.agent.service.armory.factory;
 
 import cn.bugstack.wrench.design.framework.tree.StrategyHandler;
 import com.google.adk.agents.BaseAgent;
-import com.google.adk.agents.LlmAgent;
-import com.google.adk.agents.SequentialAgent;
-import com.google.adk.runner.InMemoryRunner;
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
 import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
@@ -16,6 +13,7 @@ import lombok.NoArgsConstructor;
 
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.context.ApplicationContext;
 import org.springframework.expression.spel.ast.OpNE;
 import org.springframework.stereotype.Service;
 
@@ -37,8 +35,15 @@ public class DefaultArmoryFactory {
     @Resource
     private RootNode rootNode;
 
+    @Resource
+    private ApplicationContext applicationContext;
+
     public StrategyHandler<ArmoryCommandEntity, DynamicContext, AiAgentRegisterVO> armoryStrategyHandler() {
         return rootNode;
+    }
+
+    public AiAgentRegisterVO getAiAgentRegisterVOById(String agentId) {
+        return applicationContext.getBean(agentId,AiAgentRegisterVO.class);
     }
 
     @Data

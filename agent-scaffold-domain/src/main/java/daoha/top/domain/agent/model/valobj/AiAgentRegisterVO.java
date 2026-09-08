@@ -28,6 +28,6 @@ public class AiAgentRegisterVO {
     //智能体描述
     private String agentDesc;
     //智能体执行对象
-    private InMemoryRunner  runner;
+    private InMemoryRunner runner;
 
 }
