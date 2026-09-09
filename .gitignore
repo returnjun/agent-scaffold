@@ -43,6 +43,7 @@ build/
 /agent-scaffold-app/src/main/resources/agent/*.yaml
 !/agent-scaffold-app/src/main/resources/agent/*.example.yml
 !/agent-scaffold-app/src/main/resources/agent/*.example.yaml
+/agent-scaffold-app/push.sh
 
 # Runtime data and logs may contain credentials and request details
 *.log
