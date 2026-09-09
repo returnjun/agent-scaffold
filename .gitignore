@@ -5,10 +5,7 @@ target/
 .kotlin
 
 ### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -37,3 +34,25 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Local environment files and agent configuration containing API credentials
+.env
+.env.*
+!.env.example
+/agent-scaffold-app/src/main/resources/agent/*.yml
+/agent-scaffold-app/src/main/resources/agent/*.yaml
+!/agent-scaffold-app/src/main/resources/agent/*.example.yml
+!/agent-scaffold-app/src/main/resources/agent/*.example.yaml
+
+# Runtime data and logs may contain credentials and request details
+*.log
+**/data/log/
+**/logs/
+/agent-scaffold-app/data/
+
+# Duplicate/generated skill copies; canonical resources live under agent/skills/
+/agent-scaffold-app/src/main/resources/pdf/
+/agent-scaffold-app/src/main/resources/pptx/
+
+# Keep all test sources and test resources local
+**/src/test/
