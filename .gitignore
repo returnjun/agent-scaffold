@@ -35,11 +35,24 @@ build/
 ### Mac OS ###
 .DS_Store
 
-# Local agent configuration containing API credentials
-/agent-scaffold-app/src/main/resources/agent/test-agent.yml
+# Local environment files and agent configuration containing API credentials
+.env
+.env.*
+!.env.example
+/agent-scaffold-app/src/main/resources/agent/*.yml
+/agent-scaffold-app/src/main/resources/agent/*.yaml
+!/agent-scaffold-app/src/main/resources/agent/*.example.yml
+!/agent-scaffold-app/src/main/resources/agent/*.example.yaml
 
-# Runtime logs may contain credentials and local configuration
-/data/log/
+# Runtime data and logs may contain credentials and request details
+*.log
+**/data/log/
+**/logs/
+/agent-scaffold-app/data/
+
+# Duplicate/generated skill copies; canonical resources live under agent/skills/
+/agent-scaffold-app/src/main/resources/pdf/
+/agent-scaffold-app/src/main/resources/pptx/
 
 # Keep all test sources and test resources local
 **/src/test/

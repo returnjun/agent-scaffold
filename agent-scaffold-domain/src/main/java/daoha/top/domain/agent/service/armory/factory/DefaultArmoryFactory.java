@@ -1,23 +1,21 @@
 package daoha.top.domain.agent.service.armory.factory;
 
-import cn.bugstack.wrench.design.framework.tree.StrategyHandler;
 import com.google.adk.agents.BaseAgent;
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
 import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
 import daoha.top.domain.agent.service.armory.node.RootNode;
+import daoha.top.types.design.tree.StrategyHandler;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.context.ApplicationContext;
-import org.springframework.expression.spel.ast.OpNE;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -52,14 +50,17 @@ public class DefaultArmoryFactory {
     @AllArgsConstructor
     public static class DynamicContext{
 
-        private OpenAiApi openAiApi;
+        private AiAgentConfigTableVO.Module.AiApi aiApi;
         private ChatModel chatModel;
 
+        @Builder.Default
         private Map<String,BaseAgent> agentMap = new HashMap<>();
 
+        @Builder.Default
         private AtomicInteger currentStepIndex = new AtomicInteger(0);
         private AiAgentConfigTableVO.Module.AgentWorkflow currentAgentWorkflow;
 
+        @Builder.Default
         private Map<String,Object> dataObjects = new HashMap<>();
 
         public <T> void setValue(String key, T value){
