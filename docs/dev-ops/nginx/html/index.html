@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="智能体对话工作台">
+    <title>Agent Console · 智能体对话</title>
+    <script>
+        if (!sessionStorage.getItem('agentConsoleUser')) {
+            window.location.replace('./login.html');
+        }
+    </script>
+    <link rel="stylesheet" href="./css/chat.css">
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <div class="brand-icon" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 4 34 12v16L20 36 6 28V12L20 4Z"/><circle cx="20" cy="20" r="4"/><path d="m20 8 0 8M20 24v8M9.5 14l7 4M23.5 22l7 4M30.5 14l-7 4M16.5 22l-7 4"/></svg></div>
+            <div><strong>Agent Console</strong><span>INTELLIGENCE OS</span></div>
+        </div>
+        <div class="sidebar-section">
+            <label for="agent-select">当前智能体</label>
+            <div class="select-shell"><span class="agent-indicator"></span><select id="agent-select" aria-describedby="agent-description"><option value="">正在加载智能体…</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg></div>
+            <p id="agent-description">正在连接智能体服务</p>
+        </div>
+        <button class="new-chat" id="new-chat" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>清空当前对话</span></button>
+        <div class="sidebar-spacer"></div>
+        <div class="service-status"><span class="pulse"></span><div><strong>Agent Runtime</strong><span id="service-label">等待连接</span></div></div>
+        <button class="account" id="logout-button" type="button" aria-label="退出登录"><span class="avatar" id="sidebar-avatar">A</span><span class="account-copy"><strong id="sidebar-user">admin</strong><small>退出当前账号</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"/></svg></button>
+    </aside>
+
+    <main class="workspace">
+        <header class="topbar">
+            <button class="menu-button" id="menu-button" type="button" aria-label="打开导航" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+            <div class="active-agent"><span class="agent-avatar">AI</span><div><strong id="active-agent-name">智能体对话</strong><span><i></i><span id="active-agent-state">准备就绪</span></span></div></div>
+            <div class="topbar-meta"><span class="session-pill"><span>SESSION</span><strong id="session-id">NEW</strong></span><span class="user-pill" id="topbar-user">admin</span></div>
+        </header>
+
+        <section class="conversation" id="conversation" aria-live="polite" aria-label="对话内容">
+            <div class="welcome" id="welcome-state">
+                <span class="welcome-mark">AI</span>
+                <h1>今天想让智能体<br>帮你完成什么？</h1>
+                <p>选择左侧智能体，然后发送你的问题。每次提问都会创建一个独立会话。</p>
+                <div class="suggestions" aria-label="问题示例"><button type="button" data-prompt="请你告诉我北京今天的天气">查询北京今天的天气</button><button type="button" data-prompt="请帮我整理一份今日工作计划">整理一份工作计划</button></div>
+            </div>
+            <div class="messages" id="messages"></div>
+        </section>
+
+        <footer class="composer-wrap">
+            <form class="composer" id="chat-form">
+                <textarea id="message-input" rows="1" maxlength="4000" placeholder="向智能体发送消息…" aria-label="对话消息"></textarea>
+                <div class="composer-footer"><span class="stream-label"><i></i> 流式响应</span><span class="keyboard-tip">Enter 发送 · Shift + Enter 换行</span><button type="submit" id="send-button" aria-label="发送消息"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-5 14-2-6-7-1Z"/><path d="m12 13 7-8"/></svg></button></div>
+            </form>
+            <p class="disclaimer">智能体生成的内容可能存在误差，请核验重要信息。</p>
+        </footer>
+    </main>
+</div>
+<div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="./js/config.js"></script>
+<script src="./js/chat.js"></script>
+</body>
+</html>

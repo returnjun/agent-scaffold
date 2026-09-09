@@ -17,7 +17,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +93,8 @@ public class ChatService implements IChatService {
         Flowable<Event> eventFlowable = runner.runAsync(userId, sessionId, userMessage);
 
         List<String> outputs = new ArrayList<>();
-        eventFlowable.blockingForEach(event -> outputs.add(event.stringifyContent()));
+        finalResponseEvents(eventFlowable)
+                .blockingForEach(event -> outputs.add(event.stringifyContent()));
         return outputs;
     }
 
@@ -105,7 +106,7 @@ public class ChatService implements IChatService {
         }
         InMemoryRunner runner = aiAgentRegisterVOById.getRunner();
         Content userMessage = Content.fromParts(Part.fromText(message));
-        return  runner.runAsync(userId, sessionId, userMessage);
+        return finalResponseEvents(runner.runAsync(userId, sessionId, userMessage));
     }
 
     @Override
@@ -146,10 +147,23 @@ public class ChatService implements IChatService {
         Flowable<Event> events = runner.runAsync(chatCommandEntity.getUserId(), chatCommandEntity.getSessionId(), content);
 
         List<String> outputs = new ArrayList<>();
-        events.blockingForEach(event -> outputs.add(event.stringifyContent()));
+        finalResponseEvents(events)
+                .blockingForEach(event -> outputs.add(event.stringifyContent()));
 
         return outputs;
     }
+
+    /**
+     * ADK 会把模型片段、工具调用、工具响应和最终回答都作为 Event 发出。
+     * 对外只保留本轮最后一个非空最终回答，避免把内部执行细节暴露给客户端。
+     */
+    private Flowable<Event> finalResponseEvents(Flowable<Event> events) {
+        return events
+                .filter(event -> event.finalResponse()
+                        && !event.stringifyContent().isBlank())
+                .takeLast(1);
+    }
+
     private String buildSessionKey(String agentId, String userId) {
         return agentId + ":" + userId;
     }

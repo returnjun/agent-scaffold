@@ -1,17 +1,15 @@
 package daoha.top.domain.agent.service.armory.node;
 
-import cn.bugstack.wrench.design.framework.tree.StrategyHandler;
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
 import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
 import daoha.top.domain.agent.service.armory.AbstractArmorySupport;
 import daoha.top.domain.agent.service.armory.factory.DefaultArmoryFactory;
+import daoha.top.types.design.tree.StrategyHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * @ClassName : ApiNode
@@ -34,14 +32,7 @@ public class ApiNode extends AbstractArmorySupport {
         AiAgentConfigTableVO aiAgentConfigTableVO = requestCommandEntity.getAiAgentConfigTableVO();
         AiAgentConfigTableVO.Module.AiApi aiApiConfig = aiAgentConfigTableVO.getModule().getAiApi();
 
-        OpenAiApi openAiApi = OpenAiApi.builder()
-                .baseUrl(aiApiConfig.getBaseUrl())
-                .apiKey(aiApiConfig.getApiKey())
-                .completionsPath(StringUtils.isNotBlank(aiApiConfig.getCompletionsPath()) ? aiApiConfig.getCompletionsPath() : "v1/chat/completions")
-                .embeddingsPath(StringUtils.isNotBlank(aiApiConfig.getEmbeddingsPath()) ? aiApiConfig.getEmbeddingsPath() : "v1/embeddings")
-                .build();
-
-        dynamicContext.setOpenAiApi(openAiApi);
+        dynamicContext.setAiApi(aiApiConfig);
 
         return router(requestCommandEntity, dynamicContext);
     }

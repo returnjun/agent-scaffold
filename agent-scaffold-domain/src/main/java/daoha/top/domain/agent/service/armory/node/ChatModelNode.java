@@ -1,24 +1,18 @@
 package daoha.top.domain.agent.service.armory.node;
 
-import cn.bugstack.wrench.design.framework.tree.StrategyHandler;
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
 import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
 import daoha.top.domain.agent.service.armory.AbstractArmorySupport;
 import daoha.top.domain.agent.service.armory.factory.DefaultArmoryFactory;
-import daoha.top.domain.agent.service.armory.matter.mcp.client.TooMcpCreateService;
-import daoha.top.domain.agent.service.armory.matter.mcp.client.factory.DefaultMcpClientFactory;
+import daoha.top.types.design.tree.StrategyHandler;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
-import org.springframework.ai.tool.ToolCallback;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @ClassName : ChatModelNode
@@ -34,41 +28,46 @@ public class ChatModelNode extends AbstractArmorySupport {
     @Resource
     private AgentNode  agentNode;
 
-    @Resource
-    private DefaultMcpClientFactory  mcpClientFactory;
-
     @Override
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
 
         log.info("chatModel 装配");
 
         // 获取上下文对象
-        OpenAiApi openAiApi = dynamicContext.getOpenAiApi();
+        AiAgentConfigTableVO.Module.AiApi aiApi = dynamicContext.getAiApi();
 
         // 获取配置对象
         AiAgentConfigTableVO aiAgentConfigTableVO = armoryCommandEntity.getAiAgentConfigTableVO();
         AiAgentConfigTableVO.Module.ChatModel chatModelConfig = aiAgentConfigTableVO.getModule().getChatModel();
-        List<AiAgentConfigTableVO.Module.ChatModel.ToolMcp> toolMcpList = chatModelConfig.getToolMcpList();
-
-        // 构建mcp服务（工厂）
-        List<ToolCallback> toolCallbackList = new ArrayList<>();
-        for(AiAgentConfigTableVO.Module.ChatModel.ToolMcp toolMcp : toolMcpList){
-            TooMcpCreateService McpCreateService = mcpClientFactory.getLocalToolMcpCreateService(toolMcp);
-            ToolCallback[] toolCallback = McpCreateService.buildToolCallback(toolMcp);
-            toolCallbackList.addAll(List.of(toolCallback));
-        }
-
         ChatModel chatModel = OpenAiChatModel.builder()
-                .openAiApi(openAiApi)
-                .defaultOptions(OpenAiChatOptions.builder()
+                .options(OpenAiChatOptions.builder()
+                        .baseUrl(resolveOpenAiBaseUrl(aiApi))
+                        .apiKey(aiApi.getApiKey())
                         .model(chatModelConfig.getModel())
-                        .toolCallbacks(toolCallbackList)
                         .build())
                 .build();
 
         dynamicContext.setChatModel(chatModel);
 
         return router(armoryCommandEntity, dynamicContext);
+    }
+
+    /**
+     * Spring AI 2.x uses the official OpenAI SDK, which appends /chat/completions
+     * to the configured base URL. Convert the legacy full completions path to
+     * the SDK-style base URL while keeping existing YAML files compatible.
+     */
+    private String resolveOpenAiBaseUrl(AiAgentConfigTableVO.Module.AiApi aiApi) {
+        String baseUrl = StringUtils.removeEnd(aiApi.getBaseUrl(), "/");
+        String completionsPath = StringUtils.defaultIfBlank(aiApi.getCompletionsPath(), "/v1/chat/completions");
+        completionsPath = "/" + StringUtils.removeStart(completionsPath, "/");
+
+        String endpointSuffix = "/chat/completions";
+        if (!completionsPath.endsWith(endpointSuffix)) {
+            throw new IllegalArgumentException("OpenAI completionsPath must end with " + endpointSuffix);
+        }
+
+        return baseUrl + StringUtils.removeEnd(completionsPath, endpointSuffix);
     }
 
     @Override
