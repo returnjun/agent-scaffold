@@ -3,9 +3,8 @@ package daoha.top.domain.agent.service.armory.node.workflow;
 import com.google.adk.agents.BaseAgent;
 import com.google.adk.agents.ParallelAgent;
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
-import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
-import daoha.top.domain.agent.model.valobj.enums.AgentTypeEnum;
+import daoha.top.domain.agent.model.valobj.AiAgentWorkflowVO;
 import daoha.top.domain.agent.service.armory.AbstractArmorySupport;
 import daoha.top.domain.agent.service.armory.factory.DefaultArmoryFactory;
 import daoha.top.types.design.tree.StrategyHandler;
@@ -30,10 +29,10 @@ public class ParallelAgentNode extends AbstractArmorySupport {
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
         log.info("agent装配的parallel并行的装配");
 
-        AiAgentConfigTableVO.Module.AgentWorkflow currentAgentWorkflow = dynamicContext.getCurrentAgentWorkflow();
+        AiAgentWorkflowVO currentAgentWorkflow = dynamicContext.getCurrentAgentWorkflow();
 
-        List<String> subAgentnames = currentAgentWorkflow.getSubAgents();
-        List<BaseAgent> baseAgents = dynamicContext.queryAgentList(subAgentnames);
+        List<Long> subAgentIds = currentAgentWorkflow.getSubAgentIds();
+        List<BaseAgent> baseAgents = dynamicContext.queryAgentList(subAgentIds);
 
         ParallelAgent parallelAgent =
                 ParallelAgent.builder()
@@ -42,7 +41,9 @@ public class ParallelAgentNode extends AbstractArmorySupport {
                         .description(currentAgentWorkflow.getDescription())
                         .build();
 
-        dynamicContext.getAgentMap().put(currentAgentWorkflow.getName(),parallelAgent);
+        if (dynamicContext.getWorkflowMap().putIfAbsent(currentAgentWorkflow.getId(), parallelAgent) != null) {
+            throw new IllegalArgumentException("重复的 Workflow ID: " + currentAgentWorkflow.getId());
+        }
 
         return router(armoryCommandEntity, dynamicContext);
     }

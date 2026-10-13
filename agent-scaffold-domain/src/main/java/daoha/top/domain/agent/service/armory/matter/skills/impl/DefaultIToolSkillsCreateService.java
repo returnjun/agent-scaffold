@@ -1,7 +1,7 @@
 package daoha.top.domain.agent.service.armory.matter.skills.impl;
 
 
-import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
+import daoha.top.domain.agent.model.valobj.AiSkillVO;
 import daoha.top.domain.agent.service.armory.matter.skills.IToolSkillsCreateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.agent.tools.SkillsTool;
@@ -18,10 +18,13 @@ import java.util.List;
 public class DefaultIToolSkillsCreateService implements IToolSkillsCreateService {
 
     @Override
-    public ToolCallback[] buildToolCallback(AiAgentConfigTableVO.Module.ChatModel.ToolSkills toolSkills) throws Exception {
+    public ToolCallback[] buildToolCallback(AiSkillVO toolSkills) throws Exception {
 
         String type = toolSkills.getType();
         String path = toolSkills.getPath();
+        if (path == null || path.isBlank()) {
+            throw new IllegalArgumentException("Skill " + toolSkills.getSkillId() + " 的 path 不能为空");
+        }
 
         List<ToolCallback> toolCallbackList = new ArrayList<>();
 
@@ -37,6 +40,11 @@ public class DefaultIToolSkillsCreateService implements IToolSkillsCreateService
                     .addSkillsResource(new ClassPathResource(path))
                     .build();
             toolCallbackList.add(toolCallback);
+        }
+
+        if (toolCallbackList.isEmpty()) {
+            throw new IllegalArgumentException("Skill " + toolSkills.getSkillId()
+                    + " 的 type 仅支持 directory 或 resource，当前值: " + type);
         }
 
         return toolCallbackList.toArray(new ToolCallback[0]);

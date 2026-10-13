@@ -4,32 +4,26 @@ import com.google.adk.agents.LlmAgent;
 import com.google.adk.models.springai.SpringAI;
 import com.google.adk.tools.BaseTool;
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
-import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
+import daoha.top.domain.agent.model.valobj.AiAgentVO;
 import daoha.top.domain.agent.service.armory.AbstractArmorySupport;
 import daoha.top.domain.agent.service.armory.factory.DefaultArmoryFactory;
-import daoha.top.domain.agent.service.armory.matter.mcp.client.TooMcpCreateService;
-import daoha.top.domain.agent.service.armory.matter.mcp.client.factory.DefaultMcpClientFactory;
-import daoha.top.domain.agent.service.armory.matter.skills.IToolSkillsCreateService;
-import daoha.top.domain.agent.service.armory.matter.tool.SpringAiToolCallbackAdapter;
 import daoha.top.types.design.tree.StrategyHandler;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.tool.ToolCallback;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * @ClassName : AgentNode
- * @Description :
- * @github:
- * @Author : 24209
- * @Date: 2026/9/6  18:11
+ * 根据 Agent 上声明的 chatId、mcpToolId 和 skillId 完成 LLM Agent 装配。
  */
 @Slf4j
 @Service
@@ -38,25 +32,28 @@ public class AgentNode extends AbstractArmorySupport {
     @Resource
     private AgentWorkFlowNode agentWorkFlowNode;
 
-    @Resource
-    private DefaultMcpClientFactory mcpClientFactory;
-
-    @Resource
-    private IToolSkillsCreateService toolSkillsCreateService;
-
     @Override
-    protected AiAgentRegisterVO doApply(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
-        log.info("agent节点装配");
+    protected AiAgentRegisterVO doApply(ArmoryCommandEntity armoryCommandEntity,
+                                        DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
+        log.info("Agent 节点装配");
 
-        ChatModel chatModel = dynamicContext.getChatModel();
-        AiAgentConfigTableVO aiAgentConfigTableVO = armoryCommandEntity.getAiAgentConfigTableVO();
-        List<BaseTool> tools = buildTools(aiAgentConfigTableVO.getModule().getChatModel());
+        List<AiAgentVO> agents = dynamicContext.getAgentConfigs();
+        if (agents == null) {
+            agents = Collections.emptyList();
+        }
 
-        List<AiAgentConfigTableVO.Module.Agent> agents = aiAgentConfigTableVO.getModule().getAgents();
+        for (AiAgentVO agent : agents) {
+            Long agentId = requireId(agent.getId(), "Agent.id");
+            String agentName = requireText(agent.getName(), "Agent.name");
+            Long chatModelId = requireId(agent.getChatModelId(), "Agent " + agentName + " 的 chatModelId");
+            ChatModel chatModel = dynamicContext.getChatModels().get(chatModelId);
+            if (chatModel == null) {
+                throw new IllegalArgumentException("Agent " + agentName + " 引用了不存在的 chatModelId=" + chatModelId);
+            }
 
-        for(AiAgentConfigTableVO.Module.Agent agent : agents){
-            LlmAgent llm = LlmAgent.builder()
-                    .name(agent.getName())
+            List<BaseTool> tools = resolveTools(agent, dynamicContext);
+            LlmAgent llmAgent = LlmAgent.builder()
+                    .name(agentName)
                     .description(agent.getDescription())
                     .model(new SpringAI(chatModel))
                     .instruction(agent.getInstruction())
@@ -64,54 +61,67 @@ public class AgentNode extends AbstractArmorySupport {
                     .outputKey(agent.getOutputKey())
                     .build();
 
-            dynamicContext.getAgentMap().put(agent.getName(), llm);
+            if (dynamicContext.getAgentMap().putIfAbsent(agentId, llmAgent) != null) {
+                throw new IllegalArgumentException("重复的 Agent ID: " + agentId);
+            }
+            log.info("Agent {} 装配完成，chatModelId={}，tools={}",
+                    agentName, chatModelId, tools.stream().map(BaseTool::name).toList());
         }
-
 
         return router(armoryCommandEntity, dynamicContext);
     }
 
-    private List<BaseTool> buildTools(AiAgentConfigTableVO.Module.ChatModel chatModelConfig) throws Exception {
+    private List<BaseTool> resolveTools(AiAgentVO agent,
+                                        DefaultArmoryFactory.DynamicContext dynamicContext) {
+        Set<String> toolIds = new LinkedHashSet<>();
+        addIds(toolIds, agent.getMcpToolIds(), "mcp:");
+        addIds(toolIds, agent.getSkillIds(), "skill:");
+        addIds(toolIds, agent.getToolIds(), "tool:");
+
         Map<String, BaseTool> toolsByName = new LinkedHashMap<>();
-
-        List<AiAgentConfigTableVO.Module.ChatModel.ToolMcp> toolMcpList = chatModelConfig.getToolMcpList();
-        if (toolMcpList != null) {
-            for (AiAgentConfigTableVO.Module.ChatModel.ToolMcp toolMcp : toolMcpList) {
-                TooMcpCreateService mcpCreateService = mcpClientFactory.getLocalToolMcpCreateService(toolMcp);
-                registerTools(toolsByName, mcpCreateService.buildToolCallback(toolMcp));
+        for (String toolId : toolIds) {
+            List<BaseTool> toolGroup = dynamicContext.getTools().get(toolId);
+            if (toolGroup == null) {
+                throw new IllegalArgumentException("Agent " + agent.getName()
+                        + " 引用了不存在的工具配置 ID=" + toolId);
+            }
+            for (BaseTool tool : toolGroup) {
+                if (toolsByName.putIfAbsent(tool.name(), tool) != null) {
+                    throw new IllegalArgumentException("Agent " + agent.getName()
+                            + " 装配出重复的工具名称=" + tool.name());
+                }
             }
         }
-
-        List<AiAgentConfigTableVO.Module.ChatModel.ToolSkills> toolSkillsList = chatModelConfig.getToolSkillsList();
-        if (toolSkillsList != null) {
-            for (AiAgentConfigTableVO.Module.ChatModel.ToolSkills toolSkills : toolSkillsList) {
-                registerTools(toolsByName, toolSkillsCreateService.buildToolCallback(toolSkills));
-            }
-            log.info("tool注册成功");
-        }
-
-        log.info("为 ADK Agent 注册工具: {}", toolsByName.keySet());
         return new ArrayList<>(toolsByName.values());
     }
 
-    private void registerTools(Map<String, BaseTool> toolsByName, ToolCallback[] callbacks) {
-        if (callbacks == null) {
+    private void addIds(Set<String> destination, List<Long> ids, String prefix) {
+        if (ids == null) {
             return;
         }
-
-        for (ToolCallback callback : callbacks) {
-            SpringAiToolCallbackAdapter tool = new SpringAiToolCallbackAdapter(callback);
-            BaseTool previous = toolsByName.putIfAbsent(tool.name(), tool);
-            if (previous != null) {
-                throw new IllegalArgumentException("Duplicate tool name: " + tool.name());
-            }
+        for (Long id : ids) {
+            destination.add(prefix + requireId(id, "工具配置 ID"));
         }
     }
 
+    private Long requireId(Long value, String fieldName) {
+        if (value == null) {
+            throw new IllegalArgumentException(fieldName + " 不能为空");
+        }
+        return value;
+    }
+
+    private String requireText(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " 不能为空");
+        }
+        return value;
+    }
+
     @Override
-    public StrategyHandler<ArmoryCommandEntity, DefaultArmoryFactory.DynamicContext, AiAgentRegisterVO> get(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
-
-
+    public StrategyHandler<ArmoryCommandEntity, DefaultArmoryFactory.DynamicContext, AiAgentRegisterVO> get(
+            ArmoryCommandEntity armoryCommandEntity,
+            DefaultArmoryFactory.DynamicContext dynamicContext) {
         return agentWorkFlowNode;
     }
 }

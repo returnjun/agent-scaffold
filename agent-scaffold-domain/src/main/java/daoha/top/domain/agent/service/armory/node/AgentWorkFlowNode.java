@@ -1,8 +1,8 @@
 package daoha.top.domain.agent.service.armory.node;
 
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
-import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
+import daoha.top.domain.agent.model.valobj.AiAgentWorkflowVO;
 import daoha.top.domain.agent.model.valobj.enums.AgentTypeEnum;
 import daoha.top.domain.agent.service.armory.AbstractArmorySupport;
 import daoha.top.domain.agent.service.armory.factory.DefaultArmoryFactory;
@@ -43,8 +43,7 @@ public class AgentWorkFlowNode extends AbstractArmorySupport {
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
         log.info("Ai agent的workflow节点装配");
 
-        AiAgentConfigTableVO aiAgentConfigTableVO = armoryCommandEntity.getAiAgentConfigTableVO();
-        List<AiAgentConfigTableVO.Module.AgentWorkflow> agentWorkflows = aiAgentConfigTableVO.getModule().getAgentWorkflows();
+        List<AiAgentWorkflowVO> agentWorkflows = dynamicContext.getWorkflowConfigs();
 
         if(null==agentWorkflows||agentWorkflows.isEmpty()||dynamicContext.getCurrentStepIndex()>=agentWorkflows.size()){
             dynamicContext.setCurrentAgentWorkflow(null);
@@ -62,7 +61,7 @@ public class AgentWorkFlowNode extends AbstractArmorySupport {
     @Override
     public StrategyHandler<ArmoryCommandEntity, DefaultArmoryFactory.DynamicContext, AiAgentRegisterVO> get(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
 
-        AiAgentConfigTableVO.Module.AgentWorkflow currentAgentWorkflow = dynamicContext.getCurrentAgentWorkflow();
+        AiAgentWorkflowVO currentAgentWorkflow = dynamicContext.getCurrentAgentWorkflow();
 
         if(null==currentAgentWorkflow){
             return runnerNode;

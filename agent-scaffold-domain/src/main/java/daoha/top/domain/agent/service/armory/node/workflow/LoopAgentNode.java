@@ -2,9 +2,8 @@ package daoha.top.domain.agent.service.armory.node.workflow;
 
 import com.google.adk.agents.LoopAgent;
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
-import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
-import daoha.top.domain.agent.model.valobj.enums.AgentTypeEnum;
+import daoha.top.domain.agent.model.valobj.AiAgentWorkflowVO;
 import daoha.top.domain.agent.service.armory.AbstractArmorySupport;
 import daoha.top.domain.agent.service.armory.factory.DefaultArmoryFactory;
 import daoha.top.types.design.tree.StrategyHandler;
@@ -29,9 +28,9 @@ public class LoopAgentNode extends AbstractArmorySupport {
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
         log.info("agent装配的loopagentnode装配");
 
-        AiAgentConfigTableVO.Module.AgentWorkflow currentAgentWorkflow = dynamicContext.getCurrentAgentWorkflow();
+        AiAgentWorkflowVO currentAgentWorkflow = dynamicContext.getCurrentAgentWorkflow();
 
-        List<String> subAgents = currentAgentWorkflow.getSubAgents();
+        List<Long> subAgents = currentAgentWorkflow.getSubAgentIds();
 
         LoopAgent loopAgent =
                 LoopAgent.builder()
@@ -41,7 +40,9 @@ public class LoopAgentNode extends AbstractArmorySupport {
                         .maxIterations(currentAgentWorkflow.getMaxIterations())
                         .build();
 
-        dynamicContext.getAgentMap().put(currentAgentWorkflow.getName(),loopAgent);
+        if (dynamicContext.getWorkflowMap().putIfAbsent(currentAgentWorkflow.getId(), loopAgent) != null) {
+            throw new IllegalArgumentException("重复的 Workflow ID: " + currentAgentWorkflow.getId());
+        }
 
 //        registerBean(agentWorkflow.getName(),LoopAgent.class,loopAgent);
 

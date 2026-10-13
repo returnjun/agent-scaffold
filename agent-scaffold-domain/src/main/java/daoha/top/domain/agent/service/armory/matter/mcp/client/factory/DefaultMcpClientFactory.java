@@ -1,6 +1,6 @@
 package daoha.top.domain.agent.service.armory.matter.mcp.client.factory;
 
-import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
+import daoha.top.domain.agent.model.valobj.AiMcpToolVO;
 import daoha.top.domain.agent.service.armory.matter.mcp.client.TooMcpCreateService;
 import daoha.top.domain.agent.service.armory.matter.mcp.client.impl.LocalToolMcpCreateService;
 import daoha.top.domain.agent.service.armory.matter.mcp.client.impl.SSEToolMcpCreateService;
@@ -30,10 +30,17 @@ public class DefaultMcpClientFactory {
     private StdioToolMcpCreateService   stdioToolMcpCreateService;
 
 
-    public TooMcpCreateService getLocalToolMcpCreateService(AiAgentConfigTableVO.Module.ChatModel.ToolMcp toolMcp) {
-        if(null !=toolMcp.getLocal())return localToolMcpCreateService;
-        if(null !=toolMcp.getSse())return sseToolMcpCreateService;
-        if(null !=toolMcp.getStdio())return stdioToolMcpCreateService;
+    public TooMcpCreateService getToolMcpCreateService(AiMcpToolVO toolMcp) {
+        int transportCount = (toolMcp.getLocal() == null ? 0 : 1)
+                + (toolMcp.getSse() == null ? 0 : 1)
+                + (toolMcp.getStdio() == null ? 0 : 1);
+        if (transportCount != 1) {
+            throw new IllegalArgumentException("MCP 工具 " + toolMcp.getMcpToolId()
+                    + " 必须且只能配置 local、sse、stdio 中的一种传输方式");
+        }
+        if (toolMcp.getLocal() != null) return localToolMcpCreateService;
+        if (toolMcp.getSse() != null) return sseToolMcpCreateService;
+        if (toolMcp.getStdio() != null) return stdioToolMcpCreateService;
         throw new AppException(ResponseCode.NOT_FOUND_METHOD.getCode(), ResponseCode.NOT_FOUND_METHOD.getInfo());
     }
 }

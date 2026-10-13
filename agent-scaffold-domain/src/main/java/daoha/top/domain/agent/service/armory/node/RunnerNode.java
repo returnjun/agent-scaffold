@@ -1,27 +1,23 @@
 package daoha.top.domain.agent.service.armory.node;
 
-import autovalue.shaded.com.google.errorprone.annotations.Immutable;
 import com.google.adk.agents.BaseAgent;
-import com.google.adk.agents.SequentialAgent;
 import com.google.adk.plugins.BasePlugin;
 import com.google.adk.runner.InMemoryRunner;
 import com.google.common.collect.ImmutableList;
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
-import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
+import daoha.top.domain.agent.model.valobj.AiAppVO;
+import daoha.top.domain.agent.model.valobj.AiRunnerVO;
 import daoha.top.domain.agent.service.armory.AbstractArmorySupport;
 import daoha.top.domain.agent.service.armory.factory.DefaultArmoryFactory;
 import daoha.top.types.design.tree.StrategyHandler;
 import daoha.top.types.enums.ResponseCode;
 import daoha.top.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @ClassName : RunnerNode
@@ -36,16 +32,13 @@ public class RunnerNode extends AbstractArmorySupport {
     @Override
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
         log.info("运行节点runner的装配");
-        AiAgentConfigTableVO aiAgentConfigTableVO = armoryCommandEntity.getAiAgentConfigTableVO();
-        //获取appid
-        String appName = aiAgentConfigTableVO.getAppName();
-        //获取agent的信息
-        AiAgentConfigTableVO.Agent agent = aiAgentConfigTableVO.getAgent();
-        String agentId = agent.getAgentId();
-        String agentDesc = agent.getAgentDesc();
-        String agentName = agent.getAgentName();
+        AiAppVO app = dynamicContext.getApp();
+        String appName = app.getAppName();
+        String agentId = app.getAgentId();
+        String agentDesc = app.getAgentDesc();
+        String agentName = app.getAgentName();
 
-        InMemoryRunner runner = getRunner(dynamicContext, aiAgentConfigTableVO, appName);
+        InMemoryRunner runner = getRunner(dynamicContext, appName);
 
         AiAgentRegisterVO aiAgentRegisterVO = AiAgentRegisterVO.builder()
                 .appName(appName)
@@ -60,16 +53,26 @@ public class RunnerNode extends AbstractArmorySupport {
         return aiAgentRegisterVO;
     }
 
-    private  InMemoryRunner getRunner(DefaultArmoryFactory.DynamicContext dynamicContext, AiAgentConfigTableVO aiAgentConfigTableVO, String appName) {
-        AiAgentConfigTableVO.Module.Runner runnerConfig = aiAgentConfigTableVO.getModule().getRunner();
-
-        String agentName = runnerConfig.getAgentName();
-        if (StringUtils.isBlank(agentName)) {
-            log.error("runner.agentName is null");
+    private InMemoryRunner getRunner(DefaultArmoryFactory.DynamicContext dynamicContext, String appName) {
+        AiRunnerVO runnerConfig = dynamicContext.getRunnerConfig();
+        if (runnerConfig == null) {
+            log.error("runner 配置为空");
             throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), ResponseCode.ILLEGAL_PARAMETER.getInfo());
         }
 
-        BaseAgent baseAgent = dynamicContext.getAgentMap().get(agentName);
+        Long agentId = runnerConfig.getAgentId();
+        Long workflowId = runnerConfig.getWorkflowId();
+        if (agentId == null && workflowId == null) {
+            throw new IllegalArgumentException("Runner 未配置 Agent 或 Workflow 入口");
+        }
+
+        BaseAgent baseAgent = agentId != null
+                ? dynamicContext.getAgentMap().get(agentId)
+                : dynamicContext.getWorkflowMap().get(workflowId);
+        if (baseAgent == null) {
+            throw new IllegalArgumentException("Runner 引用了不存在的 Agent/Workflow ID: "
+                    + (agentId != null ? agentId : workflowId));
+        }
 
         List<BasePlugin> plugins;
         List<String> pluginNames=runnerConfig.getPluginNameList();

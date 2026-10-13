@@ -3,9 +3,8 @@ package daoha.top.domain.agent.service.armory.node.workflow;
 import com.google.adk.agents.BaseAgent;
 import com.google.adk.agents.SequentialAgent;
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
-import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
-import daoha.top.domain.agent.model.valobj.enums.AgentTypeEnum;
+import daoha.top.domain.agent.model.valobj.AiAgentWorkflowVO;
 import daoha.top.domain.agent.service.armory.AbstractArmorySupport;
 import daoha.top.domain.agent.service.armory.factory.DefaultArmoryFactory;
 import daoha.top.types.design.tree.StrategyHandler;
@@ -34,10 +33,10 @@ public class SequentialAgentNode extends AbstractArmorySupport {
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity armoryCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
         log.info("agent装配的sequent序列的装配");
 
-        AiAgentConfigTableVO.Module.AgentWorkflow currentAgentWorkflow = dynamicContext.getCurrentAgentWorkflow();
+        AiAgentWorkflowVO currentAgentWorkflow = dynamicContext.getCurrentAgentWorkflow();
 
-        List<String> subAgentnames = currentAgentWorkflow.getSubAgents();
-        List<BaseAgent> baseAgents = dynamicContext.queryAgentList(subAgentnames);
+        List<Long> subAgentIds = currentAgentWorkflow.getSubAgentIds();
+        List<BaseAgent> baseAgents = dynamicContext.queryAgentList(subAgentIds);
 
         SequentialAgent sequentialAgent =
                 SequentialAgent.builder()
@@ -46,7 +45,9 @@ public class SequentialAgentNode extends AbstractArmorySupport {
                         .subAgents(baseAgents)
                         .build();
 
-        dynamicContext.getAgentMap().put(currentAgentWorkflow.getName(),sequentialAgent);
+        if (dynamicContext.getWorkflowMap().putIfAbsent(currentAgentWorkflow.getId(), sequentialAgent) != null) {
+            throw new IllegalArgumentException("重复的 Workflow ID: " + currentAgentWorkflow.getId());
+        }
 
         return router(armoryCommandEntity, dynamicContext);
     }

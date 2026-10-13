@@ -1,6 +1,6 @@
 package daoha.top.domain.agent.service.armory.matter.mcp.client.impl;
 
-import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
+import daoha.top.domain.agent.model.valobj.AiMcpToolVO;
 import daoha.top.domain.agent.service.armory.matter.mcp.client.TooMcpCreateService;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
@@ -27,20 +27,21 @@ import java.time.Duration;
 @Service
 public class StdioToolMcpCreateService implements TooMcpCreateService {
     @Override
-    public ToolCallback[] buildToolCallback(AiAgentConfigTableVO.Module.ChatModel.ToolMcp toolMcp) throws Exception {
+    public ToolCallback[] buildToolCallback(AiMcpToolVO toolMcp) throws Exception {
 
-        AiAgentConfigTableVO.Module.ChatModel.ToolMcp.StdioServerParameters stdio = toolMcp.getStdio();
+        AiMcpToolVO.StdioServerParameters stdio = toolMcp.getStdio();
 
-        AiAgentConfigTableVO.Module.ChatModel.ToolMcp.StdioServerParameters.ServerParameters serverParameters = stdio.getServerParameters();
+        AiMcpToolVO.StdioServerParameters.ServerParameters serverParameters = stdio.getServerParameters();
 
         ServerParameters stdioParams = ServerParameters.builder(serverParameters.getCommand())
                 .args(serverParameters.getArgs())
                 .env(serverParameters.getEnv())
                 .build();
 
+        int requestTimeout = stdio.getRequestTimeout() == null ? 3000 : stdio.getRequestTimeout();
         McpSyncClient mcpSyncClient = McpClient.sync(new StdioClientTransport(stdioParams,
                         new JacksonMcpJsonMapper(JsonMapper.builder().build())))
-                .requestTimeout(Duration.ofSeconds(stdio.getRequestTimeout())).build();
+                .requestTimeout(Duration.ofMillis(requestTimeout)).build();
 
         McpSchema.InitializeResult initialize = mcpSyncClient.initialize();
 

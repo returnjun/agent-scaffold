@@ -6,9 +6,10 @@ import com.google.adk.sessions.Session;
 import com.google.genai.types.Content;
 import com.google.genai.types.Part;
 import daoha.top.domain.agent.model.entity.ChatCommandEntity;
+import daoha.top.domain.agent.adapter.repository.IAgentRepository;
 import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
+import daoha.top.domain.agent.model.valobj.AiAppVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
-import daoha.top.domain.agent.model.valobj.properties.AiAgentAutoConfigProperties;
 import daoha.top.domain.agent.service.IChatService;
 import daoha.top.domain.agent.service.armory.factory.DefaultArmoryFactory;
 import daoha.top.types.enums.ResponseCode;
@@ -35,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ChatService implements IChatService {
 
     @Resource
-    private AiAgentAutoConfigProperties aiAgentAutoConfigProperties;
+    private IAgentRepository agentRepository;
 
     @Resource
     private DefaultArmoryFactory defaultArmoryFactory;
@@ -45,12 +46,16 @@ public class ChatService implements IChatService {
 
     @Override
     public List<AiAgentConfigTableVO.Agent> queryAiAgentConfigList() {
-        Map<String, AiAgentConfigTableVO> tables = aiAgentAutoConfigProperties.getTables();
         List<AiAgentConfigTableVO.Agent> agents = new ArrayList<>();
-        if(null!=tables){
-            for(AiAgentConfigTableVO table:tables.values()){
-                agents.add(table.getAgent());
+        for (AiAppVO app : agentRepository.queryEnabledApps()) {
+            if (!defaultArmoryFactory.hasAiAgentRegisterVO(app.getAgentId())) {
+                continue;
             }
+            AiAgentConfigTableVO.Agent agent = new AiAgentConfigTableVO.Agent();
+            agent.setAgentId(app.getAgentId());
+            agent.setAgentName(app.getAgentName());
+            agent.setAgentDesc(app.getAgentDesc());
+            agents.add(agent);
         }
         return agents;
     }

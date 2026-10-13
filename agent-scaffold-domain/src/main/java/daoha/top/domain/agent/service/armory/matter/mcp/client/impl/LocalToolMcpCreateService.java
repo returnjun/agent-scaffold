@@ -1,6 +1,8 @@
 package daoha.top.domain.agent.service.armory.matter.mcp.client.impl;
 
-import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
+import daoha.top.domain.agent.model.valobj.AiMcpToolVO;
+import daoha.top.domain.agent.model.valobj.AiApiVO;
+import daoha.top.domain.agent.service.armory.matter.mcp.client.ConfigurableLocalToolCallbackProvider;
 import daoha.top.domain.agent.service.armory.matter.mcp.client.TooMcpCreateService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +10,8 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @ClassName : LocalToolMcpCreateService
@@ -24,15 +28,29 @@ public class LocalToolMcpCreateService implements TooMcpCreateService {
     protected ApplicationContext applicationContext;
 
     @Override
-    public ToolCallback[] buildToolCallback(AiAgentConfigTableVO.Module.ChatModel.ToolMcp toolMcp) throws Exception {
+    public ToolCallback[] buildToolCallback(AiMcpToolVO toolMcp) throws Exception {
 
-        AiAgentConfigTableVO.Module.ChatModel.ToolMcp.LocalParameters local = toolMcp.getLocal();
+        return buildToolCallback(toolMcp, List.of());
+    }
+
+    @Override
+    public ToolCallback[] buildToolCallback(AiMcpToolVO toolMcp,
+                                            List<AiApiVO> apiConfigs) {
+
+        AiMcpToolVO.LocalParameters local = toolMcp.getLocal();
 
         String name = local.getName();
 
-        ToolCallbackProvider localToolCallbackProvider = (ToolCallbackProvider)applicationContext.getBean(name);
+        Object provider = applicationContext.getBean(name);
         log.info("tool local mcp 初始化:{}",name);
 
-        return localToolCallbackProvider.getToolCallbacks();
+        if (provider instanceof ConfigurableLocalToolCallbackProvider configurableProvider) {
+            return configurableProvider.getToolCallbacks(toolMcp, apiConfigs);
+        }
+        if (provider instanceof ToolCallbackProvider callbackProvider) {
+            return callbackProvider.getToolCallbacks();
+        }
+        throw new IllegalArgumentException("本地工具 Bean 必须实现 ToolCallbackProvider 或 "
+                + "ConfigurableLocalToolCallbackProvider: " + name);
     }
 }

@@ -1,9 +1,9 @@
 package daoha.top.domain.agent.service.armory.node;
 
 import daoha.top.domain.agent.model.entity.ArmoryCommandEntity;
-import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
 import daoha.top.domain.agent.model.valobj.AiAgentRegisterVO;
 import daoha.top.domain.agent.service.armory.AbstractArmorySupport;
+import daoha.top.domain.agent.service.armory.data.ILoadDataStrategy;
 import daoha.top.domain.agent.service.armory.factory.DefaultArmoryFactory;
 import daoha.top.types.design.tree.StrategyHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -26,11 +26,14 @@ public class RootNode extends AbstractArmorySupport {
     @Resource
     private ApiNode apiNode;
 
+    @Resource
+    private ILoadDataStrategy loadDataStrategy;
+
     @Override
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity requestCommandEntity, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
 
 
-        //
+        loadDataStrategy.loadData(requestCommandEntity, dynamicContext);
 
         return router(requestCommandEntity, dynamicContext);
     }

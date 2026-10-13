@@ -1,6 +1,6 @@
 package daoha.top.domain.agent.service.armory.matter.mcp.client.impl;
 
-import daoha.top.domain.agent.model.valobj.AiAgentConfigTableVO;
+import daoha.top.domain.agent.model.valobj.AiMcpToolVO;
 import daoha.top.domain.agent.service.armory.matter.mcp.client.TooMcpCreateService;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
@@ -25,8 +25,8 @@ import java.time.Duration;
 @Service
 public class SSEToolMcpCreateService implements TooMcpCreateService {
     @Override
-    public ToolCallback[] buildToolCallback(AiAgentConfigTableVO.Module.ChatModel.ToolMcp toolMcp) throws Exception {
-        AiAgentConfigTableVO.Module.ChatModel.ToolMcp.SSEServerParameters sse = toolMcp.getSse();
+    public ToolCallback[] buildToolCallback(AiMcpToolVO toolMcp) throws Exception {
+        AiMcpToolVO.SSEServerParameters sse = toolMcp.getSse();
 
         String originalBaseUri = sse.getBaseUri();
         String baseUri = originalBaseUri;
@@ -56,7 +56,9 @@ public class SSEToolMcpCreateService implements TooMcpCreateService {
                 .sseEndpoint(sseEndpoint)
                 .build();
 
-        McpSyncClient mcpSyncClient = McpClient.sync(sseClientTransport).requestTimeout(Duration.ofMinutes(360)).build();
+        int requestTimeout = sse.getRequestTimeout() == null ? 3000 : sse.getRequestTimeout();
+        McpSyncClient mcpSyncClient = McpClient.sync(sseClientTransport)
+                .requestTimeout(Duration.ofMillis(requestTimeout)).build();
         var init_sse = mcpSyncClient.initialize();
         log.info("Tool SSE MCP Initialized {}", init_sse);
 
