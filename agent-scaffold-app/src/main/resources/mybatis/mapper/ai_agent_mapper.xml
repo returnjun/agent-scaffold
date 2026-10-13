@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="daoha.top.infrastructure.dao.IAiAgentDao">
+
+    <resultMap id="AiAgentResultMap" type="daoha.top.infrastructure.dao.po.AiAgentPO">
+        <id column="id" property="id"/>
+        <result column="app_id" property="appId"/>
+        <result column="agent_code" property="agentCode"/>
+        <result column="model_id" property="modelId"/>
+        <result column="description" property="description"/>
+        <result column="instruction_text" property="instructionText"/>
+        <result column="output_key" property="outputKey"/>
+        <result column="mcp_tool_ids" property="mcpToolIds" jdbcType="VARCHAR"/>
+        <result column="skill_ids" property="skillIds" jdbcType="VARCHAR"/>
+        <result column="tool_ids" property="toolIds" jdbcType="VARCHAR"/>
+        <result column="status" property="status"/>
+        <result column="sort_no" property="sortNo"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, app_id, agent_code, model_id, description, instruction_text, output_key,
+        mcp_tool_ids, skill_ids, tool_ids, status, sort_no, created_at, updated_at
+    </sql>
+
+    <select id="queryById" resultMap="AiAgentResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_agent
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="queryEnabledByAppId" resultMap="AiAgentResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_agent
+        WHERE app_id = #{appId}
+          AND status = 1
+        ORDER BY sort_no, id
+    </select>
+
+    <select id="queryEnabledByAppIdAndAgentCode" resultMap="AiAgentResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_agent
+        WHERE app_id = #{appId}
+          AND agent_code = #{agentCode}
+          AND status = 1
+        LIMIT 1
+    </select>
+
+</mapper>

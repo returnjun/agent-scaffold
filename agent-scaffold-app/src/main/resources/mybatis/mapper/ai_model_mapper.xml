@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="daoha.top.infrastructure.dao.IAiModelDao">
+
+    <resultMap id="AiModelResultMap" type="daoha.top.infrastructure.dao.po.AiModelPO">
+        <id column="id" property="id"/>
+        <result column="app_id" property="appId"/>
+        <result column="model_code" property="modelCode"/>
+        <result column="api_id" property="apiId"/>
+        <result column="model_name" property="modelName"/>
+        <result column="model_options" property="modelOptions" jdbcType="VARCHAR"/>
+        <result column="status" property="status"/>
+        <result column="sort_no" property="sortNo"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, app_id, model_code, api_id, model_name, model_options,
+        status, sort_no, created_at, updated_at
+    </sql>
+
+    <select id="queryById" resultMap="AiModelResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_model
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="queryEnabledByAppId" resultMap="AiModelResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_model
+        WHERE app_id = #{appId}
+          AND status = 1
+        ORDER BY sort_no, id
+    </select>
+
+</mapper>

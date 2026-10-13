@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="daoha.top.infrastructure.dao.IAiMcpToolDao">
+
+    <resultMap id="AiMcpToolResultMap" type="daoha.top.infrastructure.dao.po.AiMcpToolPO">
+        <id column="id" property="id"/>
+        <result column="app_id" property="appId"/>
+        <result column="mcp_code" property="mcpCode"/>
+        <result column="transport_type" property="transportType"/>
+        <result column="tool_name" property="toolName"/>
+        <result column="base_uri" property="baseUri"/>
+        <result column="endpoint_path" property="endpointPath"/>
+        <result column="request_timeout_ms" property="requestTimeoutMs"/>
+        <result column="command_text" property="commandText"/>
+        <result column="args_json" property="argsJson" jdbcType="VARCHAR"/>
+        <result column="env_json" property="envJson" jdbcType="VARCHAR"/>
+        <result column="local_bean_name" property="localBeanName"/>
+        <result column="auth_type" property="authType"/>
+        <result column="auth_key" property="authKey"/>
+        <result column="auth_value_ciphertext" property="authValueCiphertext" jdbcType="VARBINARY"/>
+        <result column="auth_value" property="authValue"/>
+        <result column="status" property="status"/>
+        <result column="sort_no" property="sortNo"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, app_id, mcp_code, transport_type, tool_name, base_uri, endpoint_path,
+        request_timeout_ms, command_text, args_json, env_json, local_bean_name,
+        auth_type, auth_key, auth_value_ciphertext,
+        CAST(AES_DECRYPT(auth_value_ciphertext, UNHEX(SHA2(#{masterKey}, 512))) AS CHAR CHARACTER SET utf8mb4) AS auth_value,
+        status, sort_no, created_at, updated_at
+    </sql>
+
+    <select id="queryById" resultMap="AiMcpToolResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_mcp_tool
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="queryEnabledByAppId" resultMap="AiMcpToolResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_mcp_tool
+        WHERE app_id = #{appId}
+          AND status = 1
+        ORDER BY sort_no, id
+    </select>
+
+</mapper>

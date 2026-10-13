@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="daoha.top.infrastructure.dao.IAiAppDao">
+
+    <resultMap id="AiAppResultMap" type="daoha.top.infrastructure.dao.po.AiAppPO">
+        <id column="id" property="id"/>
+        <result column="app_code" property="appCode"/>
+        <result column="app_name" property="appName"/>
+        <result column="agent_code" property="agentCode"/>
+        <result column="agent_name" property="agentName"/>
+        <result column="agent_description" property="agentDescription"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, app_code, app_name, agent_code, agent_name, agent_description,
+        status, created_at, updated_at
+    </sql>
+
+    <select id="queryById" resultMap="AiAppResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_app
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="queryEnabledByAppCode" resultMap="AiAppResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_app
+        WHERE app_code = #{appCode}
+          AND status = 1
+        LIMIT 1
+    </select>
+
+    <select id="queryEnabledByAgentCode" resultMap="AiAppResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_app
+        WHERE agent_code = #{agentCode}
+          AND status = 1
+        LIMIT 1
+    </select>
+
+    <select id="queryAllEnabled" resultMap="AiAppResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_app
+        WHERE status = 1
+        ORDER BY id
+    </select>
+
+</mapper>

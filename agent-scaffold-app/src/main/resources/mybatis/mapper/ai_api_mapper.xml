@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="daoha.top.infrastructure.dao.IAiApiDao">
+
+    <resultMap id="AiApiResultMap" type="daoha.top.infrastructure.dao.po.AiApiPO">
+        <id column="id" property="id"/>
+        <result column="app_id" property="appId"/>
+        <result column="api_code" property="apiCode"/>
+        <result column="base_url" property="baseUrl"/>
+        <result column="api_key_ciphertext" property="apiKeyCiphertext" jdbcType="VARBINARY"/>
+        <result column="api_key" property="apiKey"/>
+        <result column="completions_path" property="completionsPath"/>
+        <result column="embeddings_path" property="embeddingsPath"/>
+        <result column="status" property="status"/>
+        <result column="sort_no" property="sortNo"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, app_id, api_code, base_url, api_key_ciphertext,
+        CAST(AES_DECRYPT(api_key_ciphertext, UNHEX(SHA2(#{masterKey}, 512))) AS CHAR CHARACTER SET utf8mb4) AS api_key,
+        completions_path,
+        embeddings_path, status, sort_no, created_at, updated_at
+    </sql>
+
+    <select id="queryById" resultMap="AiApiResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_api
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="queryEnabledByAppId" resultMap="AiApiResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_api
+        WHERE app_id = #{appId}
+          AND status = 1
+        ORDER BY sort_no, id
+    </select>
+
+</mapper>

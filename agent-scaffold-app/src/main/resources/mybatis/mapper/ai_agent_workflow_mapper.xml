@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="daoha.top.infrastructure.dao.IAiAgentWorkflowDao">
+
+    <resultMap id="AiAgentWorkflowResultMap" type="daoha.top.infrastructure.dao.po.AiAgentWorkflowPO">
+        <id column="id" property="id"/>
+        <result column="app_id" property="appId"/>
+        <result column="workflow_code" property="workflowCode"/>
+        <result column="workflow_type" property="workflowType"/>
+        <result column="description" property="description"/>
+        <result column="sub_agent_ids" property="subAgentIds" jdbcType="VARCHAR"/>
+        <result column="max_iterations" property="maxIterations"/>
+        <result column="status" property="status"/>
+        <result column="sort_no" property="sortNo"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, app_id, workflow_code, workflow_type, description, sub_agent_ids,
+        max_iterations, status, sort_no, created_at, updated_at
+    </sql>
+
+    <select id="queryById" resultMap="AiAgentWorkflowResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_agent_workflow
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="queryEnabledByAppId" resultMap="AiAgentWorkflowResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_agent_workflow
+        WHERE app_id = #{appId}
+          AND status = 1
+        ORDER BY sort_no, id
+    </select>
+
+    <select id="queryEnabledByAppIdAndWorkflowCode" resultMap="AiAgentWorkflowResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_agent_workflow
+        WHERE app_id = #{appId}
+          AND workflow_code = #{workflowCode}
+          AND status = 1
+        LIMIT 1
+    </select>
+
+</mapper>

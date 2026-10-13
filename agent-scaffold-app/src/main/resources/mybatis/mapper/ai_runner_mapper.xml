@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="daoha.top.infrastructure.dao.IAiRunnerDao">
+
+    <resultMap id="AiRunnerResultMap" type="daoha.top.infrastructure.dao.po.AiRunnerPO">
+        <id column="id" property="id"/>
+        <result column="app_id" property="appId"/>
+        <result column="agent_id" property="agentId"/>
+        <result column="workflow_id" property="workflowId"/>
+        <result column="plugin_names" property="pluginNames" jdbcType="VARCHAR"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, app_id, agent_id, workflow_id, plugin_names,
+        status, created_at, updated_at
+    </sql>
+
+    <select id="queryById" resultMap="AiRunnerResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_runner
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="queryEnabledByAppId" resultMap="AiRunnerResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM ai_runner
+        WHERE app_id = #{appId}
+          AND status = 1
+        LIMIT 1
+    </select>
+
+</mapper>
